@@ -25,6 +25,7 @@ var (
 	confPath = kingpin.Flag("config", "JSON configuration location").Short('c').String()
 	test     = kingpin.Flag("test", "Run tests").Short('t').Bool()
 	attrib   = kingpin.Flag("attrib", "Also watch attribute changes").Bool()
+	build    = kingpin.Flag("build", "Build name").String()
 )
 
 type config struct {
@@ -33,7 +34,7 @@ type config struct {
 	Suffixes []string
 	Test     bool
 	Attrib   bool
-	build    string
+	Build    string
 }
 
 func newConfig() (*config, error) {
@@ -102,18 +103,27 @@ func loadConfiguration() (*config, error) {
 		conf.Attrib = *attrib
 	}
 
-	buildName := "application-build-" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	if runtime.GOOS == "windows" {
-		buildName += ".exe"
+	if len(conf.Build) == 0 {
+		buildName := "application-build-" + strconv.FormatInt(time.Now().UnixNano(), 10)
+
+		if build != nil && len(*build) > 0 {
+			buildName = *build
+		}
+
+		conf.Build = buildName
 	}
 
-	conf.build, err = convertAbsolute(buildName)
+	if runtime.GOOS == "windows" {
+		conf.Build += ".exe"
+	}
+
+	conf.Build, err = convertAbsolute(conf.Build)
 	if err != nil {
 		return nil, err
 	}
 
 	// ignore build files
-	conf.Ignore = append(conf.Ignore, conf.build)
+	conf.Ignore = append(conf.Ignore, conf.Build)
 
 	// make absolute paths out of ignored files
 	conf.Ignore = parseGlobs(conf.Ignore)

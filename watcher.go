@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/fsnotify.v1"
+	"github.com/fsnotify/fsnotify"
 )
 
 type watcher struct {
@@ -17,17 +17,17 @@ type watcher struct {
 
 // if we got relevant file event, and file extension is supported, and we didn't ignore changed file
 // then we can confirm this file is important for us, and we should do required actions on it
-func (w *watcher) isEventImportant(ev fsnotify.Event) bool {
+func (w *watcher) isEventImportant(ev fsnotify.Event) (bool, string) {
 	file := ev.Name
 
 	// if change file is actually build file, than skip it
-	if strings.HasSuffix(file, w.pm.conf.build) {
-		return false
+	if strings.HasSuffix(file, w.pm.conf.Build) {
+		return false, "none"
 	}
 
 	importantEvent := ev.Op == fsnotify.Write || ev.Op == fsnotify.Rename || ev.Op == fsnotify.Remove || (w.pm.conf.Attrib && ev.Op == fsnotify.Chmod)
 	if !importantEvent {
-		return false
+		return false, "none"
 	}
 
 	supportedFile := false
@@ -40,28 +40,28 @@ func (w *watcher) isEventImportant(ev fsnotify.Event) bool {
 
 	if !supportedFile {
 		logger.Debugf("File %s changed but file extension is not enabled, so skip it!", file)
-		return false
+		return false, "none"
 	}
 
 	abs, err := filepath.Abs(file)
 	if err != nil {
 		logger.Errorf("Error while converting file %s to absolute path! %s", file, err.Error())
-		return false
+		return false, "none"
 	}
 
 	if contains(w.pm.conf.Ignore, abs) {
 		logger.Debugf("File %s changed but it is in ignore list, so skip it!", file)
-		return false
+		return false, "none"
 	}
 
 	// if we got rename event, but file exist, we should ignore event
 	if ev.Op == fsnotify.Rename {
 		if _, err := os.Stat(file); err == nil {
-			return false
+			return false, "none"
 		}
 	}
 
-	return true
+	return true, ev.Op.String()
 }
 
 // we get many events when file changes,
@@ -86,11 +86,11 @@ func (w *watcher) processFileEvents() {
 			if !ok {
 				return
 			} else {
-				if w.isEventImportant(ev) {
+				if is, reason := w.isEventImportant(ev); is {
 					w.throttleEvents()
 
-					logger.Debugf("reloading due to change in file: %s", ev.Name)
-					logger.Info("change detected, reloading...")
+					logger.Infof("reloading due to change in file: %s [%s]", ev.Name, reason)
+					// logger.Info("change detected, reloading...")
 					w.pm.stop()
 					w.pm.run()
 				}

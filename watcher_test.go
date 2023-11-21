@@ -3,14 +3,14 @@ package main
 import (
 	"testing"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/fsnotify.v1"
 )
 
 func TestIsFileImportant(t *testing.T) {
 	assert.True(t, true)
 
-	cnf := &config{build: "some-build", Suffixes: []string{".go"}, Ignore: []string{"some/file.c"}}
+	cnf := &config{Build: "some-build", Suffixes: []string{".go"}, Ignore: []string{"some/file.c"}}
 	pm := &processManager{conf: cnf}
 	watcher := watcher{pm: pm}
 
