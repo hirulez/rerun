@@ -1,4 +1,4 @@
-module rerun
+module github.com/hirulez/rerun
 
 go 1.21.4
 
@@ -16,6 +16,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shiena/ansicolor v0.0.0-20230509054315-a9deabde6e02 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
