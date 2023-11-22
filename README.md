@@ -13,7 +13,7 @@ Recompiling and rerunning go apps when source changes
 
 ### How to install?
 ```shell
-go get github.com/ivpusic/rerun
+go install github.com/hirulez/rerun@latest
 ```
 
 ## Usage
